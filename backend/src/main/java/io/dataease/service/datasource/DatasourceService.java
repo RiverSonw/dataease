@@ -95,6 +95,11 @@ public class DatasourceService {
     @Resource
     private ExtTaskInstanceMapper extTaskInstanceMapper;
 
+    /**
+     * 获取可用的数据源类型。
+     *
+     * @return
+     */
     public Collection<DataSourceType> types() {
         Collection<DataSourceType> types = new ArrayList<>();
         types.addAll(SpringContextUtil.getApplicationContext().getBeansOfType(DataSourceType.class).values());
@@ -118,9 +123,14 @@ public class DatasourceService {
         datasource.setUpdateTime(currentTimeMillis);
         datasource.setCreateTime(currentTimeMillis);
         datasource.setCreateBy(String.valueOf(AuthUtils.getUser().getUsername()));
+
+        // 检查并更新数据源状态
         checkAndUpdateDatasourceStatus(datasource);
+        //  将数据源信息 保存到 数据库
         datasourceMapper.insertSelective(datasource);
+        // 将数据源接入连接池
         handleConnectionPool(datasource, "add");
+
         sysAuthService.copyAuth(datasource.getId(), SysAuthConstants.AUTH_SOURCE_TYPE_DATASOURCE);
         return datasource;
     }
@@ -331,13 +341,23 @@ public class DatasourceService {
         }
     }
 
+    /**
+     * 校验 数据源的可用性
+     * @param datasource
+     * @return
+     * @throws Exception
+     */
     public ResultHolder validate(DatasourceDTO datasource) throws Exception {
         if (datasource.isConfigurationEncryption()) {
+            // 更新 配置项信息。转为 String格式。
             datasource.setConfiguration(new String(java.util.Base64.getDecoder().decode(datasource.getConfiguration())));
         }
         DatasourceDTO datasourceDTO = new DatasourceDTO();
         BeanUtils.copyBean(datasourceDTO, datasource);
+
+
         try {
+            // 获取数据源提供者（创建连接池？)
             Provider datasourceProvider = ProviderFactory.getProvider(datasource.getType());
             datasourceProvider.checkConfiguration(datasource);
             DatasourceRequest datasourceRequest = new DatasourceRequest();
@@ -377,6 +397,11 @@ public class DatasourceService {
         }
     }
 
+    /**
+     * 验证数据源
+     * @param datasourceId  数据源ID，保存在数据库中的数据ID
+     * @return
+     */
     public ResultHolder validate(String datasourceId) {
         Datasource datasource = datasourceMapper.selectByPrimaryKey(datasourceId);
         if (datasource == null) {
@@ -387,7 +412,9 @@ public class DatasourceService {
             Provider datasourceProvider = ProviderFactory.getProvider(datasource.getType());
             DatasourceRequest datasourceRequest = new DatasourceRequest();
             datasourceRequest.setDatasource(datasource);
+
             datasourceStatus = datasourceProvider.checkStatus(datasourceRequest);
+
             if (datasource.getType().equalsIgnoreCase("api")) {
                 List<ApiDefinition> apiDefinitionList = new Gson().fromJson(datasource.getConfiguration(), new TypeToken<List<ApiDefinition>>() {
                 }.getType());
@@ -396,17 +423,21 @@ public class DatasourceService {
                 for (ApiDefinition apiDefinition : apiDefinitionList) {
                     String status = apiItemStatuses.get(apiDefinition.getName()).getAsString();
                     apiDefinition.setStatus(status);
+                    //  equalsIgnoreCase 比较字符串忽略大小写
                     if (status.equalsIgnoreCase("Success")) {
                         success++;
                     }
                 }
                 if (success == apiDefinitionList.size()) {
+                    //  配置信息全部正常
                     datasource.setStatus(datasourceStatus);
                     return ResultHolder.success(datasource);
                 }
+                // 存在有不正常的配置信息
                 if (success > 0 && success < apiDefinitionList.size()) {
                     return ResultHolder.error(Translator.get("I18N_DS_INVALID_TABLE"), datasource);
                 }
+                // 配置信息 都不正常
                 return ResultHolder.error(Translator.get("I18N_DS_INVALID"), datasource);
             }
 

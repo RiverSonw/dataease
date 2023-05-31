@@ -382,6 +382,9 @@ public class JdbcProvider extends DefaultJdbcProvider {
         DatasourceTypes datasourceType = DatasourceTypes.valueOf(datasourceRequest.getDatasource().getType());
         Properties props = new Properties();
         DeDriver deDriver = null;
+
+        System.out.println("    =====   连接的数据库 类型： " + datasourceType.getType() + "    =====");
+
         switch (datasourceType) {
             case mysql:
             case mariadb:

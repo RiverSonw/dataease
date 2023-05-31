@@ -6,6 +6,7 @@
         <artifactId>dataease-server</artifactId>
         <groupId>io.dataease</groupId>
         <version>${dataease.version}</version>
+        <!--<version>1.18.7</version>-->
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -383,7 +384,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <addResources>true</addResources>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

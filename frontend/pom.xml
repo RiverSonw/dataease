@@ -7,6 +7,7 @@
     <artifactId>dataease-server</artifactId>
     <groupId>io.dataease</groupId>
     <version>${dataease.version}</version>
+ <!--   <version>1.18.7</version>-->
   </parent>
 
   <modelVersion>4.0.0</modelVersion>

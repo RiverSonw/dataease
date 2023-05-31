@@ -40,6 +40,11 @@ public class ProviderFactory implements ApplicationContextAware {
     }
 
 
+    /**
+     * 创建  数据源链接的Bean容器
+     * @param type
+     * @return
+     */
     public static Provider getProvider(String type) {
         if(type.equalsIgnoreCase(DatasourceTypes.engine_doris.toString()) || type.equalsIgnoreCase(DatasourceTypes.engine_mysql.toString())){
             return context.getBean("jdbc", Provider.class);
