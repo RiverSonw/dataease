@@ -46,11 +46,13 @@ public class ProviderFactory implements ApplicationContextAware {
      * @return
      */
     public static Provider getProvider(String type) {
+        System.out.println("=== ProviderFactory.getProvider() ===");
         if(type.equalsIgnoreCase(DatasourceTypes.engine_doris.toString()) || type.equalsIgnoreCase(DatasourceTypes.engine_mysql.toString())){
             return context.getBean("jdbc", Provider.class);
         }
 
         Map<String, DataSourceType> dataSourceTypeMap = SpringContextUtil.getApplicationContext().getBeansOfType((DataSourceType.class));
+
         if(dataSourceTypeMap.keySet().contains(type)){
             DatasourceTypes datasourceType = DatasourceTypes.valueOf(type);
             switch (datasourceType) {

@@ -300,6 +300,11 @@ public class DatasourceService {
     }
 
 
+    /**
+     * 更新数据源的方法。
+     * @param id
+     * @param datasource
+     */
     public void updateDatasource(String id, Datasource datasource) {
         DatasourceExample example = new DatasourceExample();
         example.createCriteria().andIdEqualTo(id);
@@ -359,7 +364,9 @@ public class DatasourceService {
         try {
             // 获取数据源提供者（创建连接池？)
             Provider datasourceProvider = ProviderFactory.getProvider(datasource.getType());
+            // 校验 配置信息
             datasourceProvider.checkConfiguration(datasource);
+
             DatasourceRequest datasourceRequest = new DatasourceRequest();
             datasourceRequest.setDatasource(datasource);
             String datasourceStatus = datasourceProvider.checkStatus(datasourceRequest);

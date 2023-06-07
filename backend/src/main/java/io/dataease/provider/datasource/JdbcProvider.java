@@ -15,6 +15,7 @@ import io.dataease.plugins.common.constants.datasource.MySQLConstants;
 import io.dataease.plugins.common.dto.datasource.TableField;
 import io.dataease.plugins.common.request.datasource.DatasourceRequest;
 import io.dataease.plugins.datasource.entity.JdbcConfiguration;
+import io.dataease.plugins.datasource.entity.TDengineConfiguration;
 import io.dataease.plugins.datasource.provider.DefaultJdbcProvider;
 import io.dataease.plugins.datasource.provider.ExtendedJdbcClassLoader;
 import io.dataease.plugins.datasource.query.QueryProvider;
@@ -74,6 +75,8 @@ public class JdbcProvider extends DefaultJdbcProvider {
 
     @Override
     public List<TableField> getTableFields(DatasourceRequest datasourceRequest) throws Exception {
+
+        System.out.println("==JdbcProvider getTableFields() ===");
         if (datasourceRequest.getDatasource().getType().equalsIgnoreCase("mongo")) {
             datasourceRequest.setQuery("select * from " + datasourceRequest.getTable());
             return fetchResultField(datasourceRequest);
@@ -194,6 +197,8 @@ public class JdbcProvider extends DefaultJdbcProvider {
     }
 
     private String getDatabase(DatasourceRequest datasourceRequest) {
+
+        System.out.println("==== JdbcProvider.getDatabase ====");
         DatasourceTypes datasourceType = DatasourceTypes.valueOf(datasourceRequest.getDatasource().getType());
         switch (datasourceType) {
             case mysql:
@@ -495,6 +500,17 @@ public class JdbcProvider extends DefaultJdbcProvider {
                 customDriver = db2Configuration.getCustomDriver();
                 jdbcurl = db2Configuration.getJdbc();
                 break;
+            case tdengine:
+
+                System.out.printf("当前执行的是  TDengine的检查项 \n");
+                TDengineConfiguration tDengineConfiguration = new Gson().fromJson(datasourceRequest.getDatasource().getConfiguration(), TDengineConfiguration.class);
+                username = tDengineConfiguration.getUsername();
+                password = tDengineConfiguration.getPassword();
+
+                defaultDriver = tDengineConfiguration.getDriver();
+                jdbcurl = tDengineConfiguration.getJdbc();
+
+                break;
             default:
                 break;
         }
@@ -510,17 +526,23 @@ public class JdbcProvider extends DefaultJdbcProvider {
         String driverClassName;
         ExtendedJdbcClassLoader jdbcClassLoader;
         if (isDefaultClassLoader(customDriver)) {
+            System.out.println("jdbcPorvider  isDefalutClassLoader == true");
             driverClassName = defaultDriver;
             jdbcClassLoader = extendedJdbcClassLoader;
+
         } else {
+            System.out.println("jdbcPorvider  isDefalutClassLoader == false");
             if (deDriver == null) {
                 deDriver = deDriverMapper.selectByPrimaryKey(customDriver);
             }
             driverClassName = deDriver.getDriverClass();
             jdbcClassLoader = getCustomJdbcClassLoader(deDriver);
         }
-
+        // 加载 驱动
         Driver driverClass = (Driver) jdbcClassLoader.loadClass(driverClassName).newInstance();
+
+
+
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(jdbcClassLoader);
